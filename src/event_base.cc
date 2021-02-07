@@ -1,5 +1,4 @@
 #include "event_base.h"
-#include "logging.h"
 #include "util.h"
 #include <map>
 #include <string.h>

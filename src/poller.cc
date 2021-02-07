@@ -5,7 +5,6 @@
 #include <fcntl.h>
 
 #include "../include/event_base.h"
-//#include "../include/logging.h"
 #include "../include/util.h"
 #include "../include/poller.h"
 #include "../include/conn.h"
