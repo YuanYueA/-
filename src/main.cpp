@@ -3,8 +3,6 @@
 #include "../include/CTraderHandler.h"
 #include "../include/handy.h"
 
-using namespace handy;
-
 int main(){
     /*
     CMduserHandler* mduser = new CMduserHandler("130916", "qwer1234", "9999");
