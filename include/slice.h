@@ -1,5 +1,5 @@
 #pragma once
-#include <string.h>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -24,8 +24,25 @@ class Slice {
     void clear() { pe_ = pb_ = ""; }
 
     // return the eated data
-    Slice eatWord();
-    Slice eatLine();
+    Slice eatWord() {
+        const char *b = pb_;
+        while (b < pe_ && isspace(*b)) {
+            b++;
+        }
+        const char *e = b;
+        while (e < pe_ && !isspace(*e)) {
+            e++;
+        }
+        pb_ = e;
+        return Slice(b, e - b);
+    }
+    Slice eatLine() {
+        const char *p = pb_;
+        while (pb_ < pe_ && *pb_ != '\n' && *pb_ != '\r') {
+            pb_++;
+        }
+        return Slice(p, pb_ - p);
+    }
     Slice eat(int sz) {
         Slice s(pb_, sz);
         pb_ += sz;
@@ -37,54 +54,54 @@ class Slice {
         s.pe_ += eoff;
         return s;
     }
-    Slice &trimSpace();
+    Slice &trimSpace() {
+        while (pb_ < pe_ && isspace(*pb_))
+            pb_++;
+        while (pb_ < pe_ && isspace(pe_[-1]))
+            pe_--;
+        return *this;
+    }
 
     inline char operator[](size_t n) const { return pb_[n]; }
 
     std::string toString() const { return std::string(pb_, pe_); }
     // Three-way comparison.  Returns value:
-    int compare(const Slice &b) const;
+    int compare(const Slice &b) const {
+        size_t sz = size(), bsz = b.size();
+        const int min_len = (sz < bsz) ? sz : bsz;
+        int r = memcmp(pb_, b.pb_, min_len);
+        if (r == 0) {
+            if (sz < bsz)
+                r = -1;
+            else if (sz > bsz)
+                r = +1;
+        }
+        return r;
+    }
 
     // Return true if "x" is a prefix of "*this"
     bool starts_with(const Slice &x) const { return (size() >= x.size() && memcmp(pb_, x.pb_, x.size()) == 0); }
 
     bool end_with(const Slice &x) const { return (size() >= x.size() && memcmp(pe_ - x.size(), x.pb_, x.size()) == 0); }
     operator std::string() const { return std::string(pb_, pe_); }
-    std::vector<Slice> split(char ch) const;
+    std::vector<Slice> split(char ch) const {
+        std::vector<Slice> r;
+        const char *pb = pb_;
+        for (const char *p = pb_; p < pe_; p++) {
+            if (*p == ch) {
+                r.push_back(Slice(pb, p));
+                pb = p + 1;
+            }
+        }
+        if (pe_ != pb_)
+            r.push_back(Slice(pb, pe_));
+        return r;
+    }
 
    private:
     const char *pb_;
     const char *pe_;
 };
-
-inline Slice Slice::eatWord() {
-    const char *b = pb_;
-    while (b < pe_ && isspace(*b)) {
-        b++;
-    }
-    const char *e = b;
-    while (e < pe_ && !isspace(*e)) {
-        e++;
-    }
-    pb_ = e;
-    return Slice(b, e - b);
-}
-
-inline Slice Slice::eatLine() {
-    const char *p = pb_;
-    while (pb_ < pe_ && *pb_ != '\n' && *pb_ != '\r') {
-        pb_++;
-    }
-    return Slice(p, pb_ - p);
-}
-
-inline Slice &Slice::trimSpace() {
-    while (pb_ < pe_ && isspace(*pb_))
-        pb_++;
-    while (pb_ < pe_ && isspace(pe_[-1]))
-        pe_--;
-    return *this;
-}
 
 inline bool operator<(const Slice &x, const Slice &y) {
     return x.compare(y) < 0;
@@ -96,33 +113,6 @@ inline bool operator==(const Slice &x, const Slice &y) {
 
 inline bool operator!=(const Slice &x, const Slice &y) {
     return !(x == y);
-}
-
-inline int Slice::compare(const Slice &b) const {
-    size_t sz = size(), bsz = b.size();
-    const int min_len = (sz < bsz) ? sz : bsz;
-    int r = memcmp(pb_, b.pb_, min_len);
-    if (r == 0) {
-        if (sz < bsz)
-            r = -1;
-        else if (sz > bsz)
-            r = +1;
-    }
-    return r;
-}
-
-inline std::vector<Slice> Slice::split(char ch) const {
-    std::vector<Slice> r;
-    const char *pb = pb_;
-    for (const char *p = pb_; p < pe_; p++) {
-        if (*p == ch) {
-            r.push_back(Slice(pb, p));
-            pb = p + 1;
-        }
-    }
-    if (pe_ != pb_)
-        r.push_back(Slice(pb, pe_));
-    return r;
 }
 
 }  // namespace handy
